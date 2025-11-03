@@ -1,0 +1,162 @@
+version: '3.8'
+
+services:
+  # Servicio para el proyecto Kedro
+  kedro-mtg:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kedro-mtg
+    volumes:
+      - ./data:/app/data
+      - ./conf:/app/conf
+      - ./src:/app/src
+    environment:
+      - PYTHONPATH=/app
+    command: kedro run --pipeline=__default__
+
+  # Airflow Webserver (usando Python 3.9+)
+  airflow-webserver:
+    image: apache/airflow:2.9.0
+    container_name: airflow-webserver
+    # Límites de memoria aumentados para evitar OOM kills (8GB límite)
+    mem_limit: 8g
+    memswap_limit: 8g
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__FERNET_KEY=''
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=true
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__API__AUTH_BACKENDS=airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
+      - AIRFLOW__CORE__ENABLE_XCOM_PICKLING=true
+      # Timeouts aumentados para tareas de larga duración (30 minutos para heartbeat)
+      # Deshabilitar verificación estricta de heartbeat para evitar kills prematuros
+      - AIRFLOW__SCHEDULER__HEARTBEAT_SEC=10
+      - AIRFLOW__LOCAL_TASK_JOB__HEARTBEAT_SEC=1800
+      - AIRFLOW__CORE__TASK_HEARTBEAT_SEC=1800
+      - AIRFLOW__SCHEDULER__HEARTBEAT_DB_CHECK_INTERVAL=300
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ./data:/opt/airflow/data
+      - ./conf:/opt/airflow/conf
+      - ./src:/opt/airflow/src
+      - ./requirements.txt:/opt/airflow/requirements.txt
+      - ./pyproject.toml:/opt/airflow/pyproject.toml
+      - .:/opt/airflow/kedro_project
+    ports:
+      - "8080:8080"
+    command: webserver
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    depends_on:
+      - postgres
+      - airflow-init
+
+  # Airflow Scheduler (usando Python 3.9+)
+  airflow-scheduler:
+    image: apache/airflow:2.9.0
+    container_name: airflow-scheduler
+    # Límites de memoria aumentados para evitar OOM kills (8GB límite)
+    mem_limit: 8g
+    memswap_limit: 8g
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__FERNET_KEY=''
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=true
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__API__AUTH_BACKENDS=airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
+      - AIRFLOW__CORE__ENABLE_XCOM_PICKLING=true
+      # Timeouts aumentados para tareas de larga duración (30 minutos para heartbeat)
+      # Deshabilitar verificación estricta de heartbeat para evitar kills prematuros
+      - AIRFLOW__SCHEDULER__HEARTBEAT_SEC=10
+      - AIRFLOW__LOCAL_TASK_JOB__HEARTBEAT_SEC=1800
+      - AIRFLOW__CORE__TASK_HEARTBEAT_SEC=1800
+      - AIRFLOW__SCHEDULER__HEARTBEAT_DB_CHECK_INTERVAL=300
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ./data:/opt/airflow/data
+      - ./conf:/opt/airflow/conf
+      - ./src:/opt/airflow/src
+      - ./requirements.txt:/opt/airflow/requirements.txt
+      - ./pyproject.toml:/opt/airflow/pyproject.toml
+      - .:/opt/airflow/kedro_project
+    command: scheduler
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type SchedulerJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    depends_on:
+      - postgres
+      - airflow-init
+
+  # Base de datos PostgreSQL para Airflow
+  postgres:
+    image: postgres:13
+    container_name: airflow-postgres
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Inicialización de Airflow (usando Python 3.9+)
+  airflow-init:
+    image: apache/airflow:2.9.0
+    container_name: airflow-init
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - _AIRFLOW_DB_MIGRATE=true
+      - _AIRFLOW_WWW_USER_CREATE=true
+      - _AIRFLOW_WWW_USER_USERNAME=airflow
+      - _AIRFLOW_WWW_USER_PASSWORD=airflow
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ./data:/opt/airflow/data
+      - ./conf:/opt/airflow/conf
+      - ./src:/opt/airflow/src
+      - ./pyproject.toml:/opt/airflow/pyproject.toml
+      - .:/opt/airflow/kedro_project
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        function ver() {
+          airflow version
+        }
+        function init() {
+          airflow db init
+          airflow users create \
+            --username airflow \
+            --firstname Airflow \
+            --lastname Admin \
+            --role Admin \
+            --email admin@example.com \
+            --password airflow
+        }
+        ver
+        init
+    depends_on:
+      - postgres
+
+volumes:
+  postgres-db-volume:
+

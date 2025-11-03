@@ -1,0 +1,262 @@
+schema: '2.0'
+stages:
+  data_prep:
+    cmd: kedro run --pipeline=data_prep
+    deps:
+    - path: conf/base/catalog.yml
+      hash: md5
+      md5: cf08c5257265d0ae64adc7ed612fd976
+      size: 6849
+    - path: conf/base/parameters.yml
+      hash: md5
+      md5: 8090d8b826e0cebb89ab49cf91ab29d2
+      size: 2015
+    - path: data/01_raw/all_mtg_cards.csv
+      hash: md5
+      md5: 29f20ea5eda935de2f349bdd5e910b59
+      size: 355992102
+    - path: data/01_raw/standard_decks.csv
+      hash: md5
+      md5: 35c7445f46228d6d92638dfade539756
+      size: 583515
+    - path: src/ml_mtg/pipelines/data_prep
+      hash: md5
+      md5: 1d895240644147bab24090b907792d02.dir
+      size: 66936
+      nfiles: 5
+    outs:
+    - path: data/02_intermediate/deck_cards.parquet
+      hash: md5
+      md5: 1c8819b51540296c599acc7af99ce0dc
+      size: 97700
+    - path: data/02_intermediate/merged_cards_decks.parquet
+      hash: md5
+      md5: ecb2b50f7fa72f8cfc6949002bec8827
+      size: 671279
+    - path: data/03_primary/X_test_cls.parquet
+      hash: md5
+      md5: d651444156a07cf306a9f1955884b4c9
+      size: 45429
+    - path: data/03_primary/X_test_reg.parquet
+      hash: md5
+      md5: dfd40676813cae75446da115a67ed8f5
+      size: 45994
+    - path: data/03_primary/X_train_cls.parquet
+      hash: md5
+      md5: a62afe28916178059f8745c1a4dd5cb2
+      size: 77834
+    - path: data/03_primary/X_train_reg.parquet
+      hash: md5
+      md5: c7dfafdb84d92a0fe03d31cf14a1740d
+      size: 78375
+    - path: data/03_primary/mtg_deck_features.parquet
+      hash: md5
+      md5: 9cd072687d9d162b68fb6e1e4e4b88fa
+      size: 97653
+    - path: data/03_primary/y_test_cls.parquet
+      hash: md5
+      md5: 7d66be6fed708fe454c0e0aec6e5dd75
+      size: 1687
+    - path: data/03_primary/y_test_reg.parquet
+      hash: md5
+      md5: ef32dad595049b7095f0453ed18ac700
+      size: 3943
+    - path: data/03_primary/y_train_cls.parquet
+      hash: md5
+      md5: 9205030812d4dd6d50e9a2720cd62d34
+      size: 1750
+    - path: data/03_primary/y_train_reg.parquet
+      hash: md5
+      md5: d6fc54b869321f804cf0d328ea80e2ff
+      size: 8446
+  classification:
+    cmd: kedro run --pipeline=classification
+    deps:
+    - path: conf/base/parameters.yml
+      hash: md5
+      md5: 8090d8b826e0cebb89ab49cf91ab29d2
+      size: 2015
+    - path: data/03_primary/X_test_cls.parquet
+      hash: md5
+      md5: d651444156a07cf306a9f1955884b4c9
+      size: 45429
+    - path: data/03_primary/X_train_cls.parquet
+      hash: md5
+      md5: a62afe28916178059f8745c1a4dd5cb2
+      size: 77834
+    - path: data/03_primary/y_test_cls.parquet
+      hash: md5
+      md5: 7d66be6fed708fe454c0e0aec6e5dd75
+      size: 1687
+    - path: data/03_primary/y_train_cls.parquet
+      hash: md5
+      md5: 9205030812d4dd6d50e9a2720cd62d34
+      size: 1750
+    - path: src/ml_mtg/pipelines/classification
+      hash: md5
+      md5: 9ba44be1ac5c402b36418eccf59f8bab.dir
+      size: 16202
+      nfiles: 4
+    outs:
+    - path: data/06_models/best_cls_model.pkl
+      hash: md5
+      md5: c69b0e44308c8109930aba1e41c982df
+      size: 138627
+    - path: data/08_reporting/cls_comparison_plot.png
+      hash: md5
+      md5: 3420f3cd66074ba031496a0bb5b0f794
+      size: 55270
+    - path: data/08_reporting/cls_comparison_plotly.json
+      hash: md5
+      md5: 9456606647e7ebb4d4f69ce38c2b921c
+      size: 7749
+    - path: data/08_reporting/cls_metrics.json
+      hash: md5
+      md5: 51b253d2926353585eccfc3f6b7bf756
+      size: 1451
+    - path: data/08_reporting/cls_model_predictions.pkl
+      hash: md5
+      md5: fcafa1cd52f9dfdd9a6d6d4addb8bf04
+      size: 6670
+    - path: data/08_reporting/cls_results.csv
+      hash: md5
+      md5: 045404f1b43f5aa1ed21ba8fa091c5aa
+      size: 796
+    - path: data/08_reporting/cls_results.html
+      hash: md5
+      md5: 2503e479158080183f5de7dcfa9ad09a
+      size: 1369
+  multiclass:
+    cmd: kedro run --pipeline=multiclass
+    deps:
+    - path: conf/base/parameters.yml
+      hash: md5
+      md5: 02a01093d1d3ff5bd223f510a8425769
+      size: 3293
+    - path: data/03_primary/X_test_multiclass.parquet
+      hash: md5
+      md5: d30a0ca6ff8ba333ec923ba9e59cd040
+      size: 10598
+    - path: data/03_primary/X_test_reg.parquet
+      hash: md5
+      md5: e71a2fdce9626d10f4abd971eb466d8f
+      size: 10872
+    - path: data/03_primary/X_train_multiclass.parquet
+      hash: md5
+      md5: 8412b49f2b8f9a286c877fffdf8d65ae
+      size: 17888
+    - path: data/03_primary/X_train_reg.parquet
+      hash: md5
+      md5: da7d50a11165d49e801a9889bf55dee8
+      size: 17841
+    - path: data/03_primary/y_test_multiclass.parquet
+      hash: md5
+      md5: 82d1431b1e928e3b734b7ddab7e69a3a
+      size: 1677
+    - path: data/03_primary/y_test_reg.parquet
+      hash: md5
+      md5: ef32dad595049b7095f0453ed18ac700
+      size: 3943
+    - path: data/03_primary/y_train_multiclass.parquet
+      hash: md5
+      md5: b254c17f63dae3c12d59628e0a0860bf
+      size: 1798
+    - path: data/03_primary/y_train_reg.parquet
+      hash: md5
+      md5: d6fc54b869321f804cf0d328ea80e2ff
+      size: 8446
+    - path: src/ml_mtg/pipelines/multiclass
+      hash: md5
+      md5: 862c2899494e399c0f1500df83bc33ce.dir
+      size: 17634
+      nfiles: 6
+    outs:
+    - path: data/06_models/best_multiclass_model.pkl
+      hash: md5
+      md5: e7b991f9b9e7a0587ca0603cb3985d85
+      size: 1303868
+    - path: data/08_reporting/multiclass_comparison_plot.png
+      hash: md5
+      md5: a537baacb7604aa0816795c23f9d7166
+      size: 75330
+    - path: data/08_reporting/multiclass_comparison_plotly.json
+      hash: md5
+      md5: 97b9d08e2c40177b080fe4a775f784a2
+      size: 7941
+    - path: data/08_reporting/multiclass_metrics.json
+      hash: md5
+      md5: 1f05c7429b1247ed63af0fb21087b3c4
+      size: 2074
+    - path: data/08_reporting/multiclass_model_predictions.pkl
+      hash: md5
+      md5: 77914b39ddab3a04518820941f3ac9a3
+      size: 12502
+    - path: data/08_reporting/multiclass_results.csv
+      hash: md5
+      md5: 5cf3d8e42f7538e59f697ea06547187f
+      size: 1110
+    - path: data/08_reporting/multiclass_results.html
+      hash: md5
+      md5: 743d24fd6b9acc142ca8f0c8a28bb760
+      size: 1765
+  regression:
+    cmd: kedro run --pipeline=regression
+    deps:
+    - path: conf/base/parameters.yml
+      hash: md5
+      md5: 8090d8b826e0cebb89ab49cf91ab29d2
+      size: 2015
+    - path: data/03_primary/X_test_reg.parquet
+      hash: md5
+      md5: dfd40676813cae75446da115a67ed8f5
+      size: 45994
+    - path: data/03_primary/X_train_reg.parquet
+      hash: md5
+      md5: c7dfafdb84d92a0fe03d31cf14a1740d
+      size: 78375
+    - path: data/03_primary/y_test_reg.parquet
+      hash: md5
+      md5: ef32dad595049b7095f0453ed18ac700
+      size: 3943
+    - path: data/03_primary/y_train_reg.parquet
+      hash: md5
+      md5: d6fc54b869321f804cf0d328ea80e2ff
+      size: 8446
+    - path: src/ml_mtg/pipelines/regression
+      hash: md5
+      md5: 6e642c691155986d470fbebfe834b097.dir
+      size: 18800
+      nfiles: 4
+    outs:
+    - path: data/06_models/best_reg_model.pkl
+      hash: md5
+      md5: ba99016139d5e560ad501af72b24631b
+      size: 1057558
+    - path: data/08_reporting/reg_comparison_plot.png
+      hash: md5
+      md5: 0c7244eddf498de3923bac9ae646158e
+      size: 116905
+    - path: data/08_reporting/reg_comparison_plotly.json
+      hash: md5
+      md5: 07c3c0f807cb9115f389d2a4c36e39c3
+      size: 7456
+    - path: data/08_reporting/reg_metrics.json
+      hash: md5
+      md5: 4bb36e5b94a1481870d80a00c392a217
+      size: 1296
+    - path: data/08_reporting/reg_model_predictions.pkl
+      hash: md5
+      md5: 7270bb723b8f823de961578a5bc751af
+      size: 11548
+    - path: data/08_reporting/reg_results.csv
+      hash: md5
+      md5: 0862a0f354d6e0d41f0a26480ac3b3a1
+      size: 691
+    - path: data/08_reporting/reg_results.html
+      hash: md5
+      md5: e623fd3368e70e06976f87691940e6f7
+      size: 1248
+    - path: data/08_reporting/reg_scatter_plotly.json
+      hash: md5
+      md5: 1a855c28d8b368a473049e635728d6a0
+      size: 16747

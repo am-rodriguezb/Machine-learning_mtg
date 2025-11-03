@@ -1,0 +1,60 @@
+stages:
+  data_prep:
+    cmd: kedro run --pipeline=data_prep
+    deps:
+      - data/01_raw/all_mtg_cards.csv
+      - data/01_raw/standard_decks.csv
+      - src/ml_mtg/pipelines/data_prep
+      - conf/base/catalog.yml
+      - conf/base/parameters.yml
+    outs:
+      - data/02_intermediate/deck_cards.parquet
+      - data/02_intermediate/merged_cards_decks.parquet
+      - data/03_primary/mtg_deck_features.parquet
+      - data/03_primary/X_train_cls.parquet
+      - data/03_primary/X_test_cls.parquet
+      - data/03_primary/y_train_cls.parquet
+      - data/03_primary/y_test_cls.parquet
+      - data/03_primary/X_train_reg.parquet
+      - data/03_primary/X_test_reg.parquet
+      - data/03_primary/y_train_reg.parquet
+      - data/03_primary/y_test_reg.parquet
+
+  classification:
+    cmd: kedro run --pipeline=classification
+    deps:
+      - data/03_primary/X_train_cls.parquet
+      - data/03_primary/X_test_cls.parquet
+      - data/03_primary/y_train_cls.parquet
+      - data/03_primary/y_test_cls.parquet
+      - src/ml_mtg/pipelines/classification
+      - conf/base/parameters.yml
+    outs:
+      - data/06_models/best_cls_model.pkl
+      - data/08_reporting/cls_results.csv
+      - data/08_reporting/cls_comparison_plot.png
+      - data/08_reporting/cls_comparison_plotly.json
+      - data/08_reporting/cls_results.html
+      - data/08_reporting/cls_model_predictions.pkl
+    metrics:
+      - data/08_reporting/cls_metrics.json
+
+  regression:
+    cmd: kedro run --pipeline=regression
+    deps:
+      - data/03_primary/X_train_reg.parquet
+      - data/03_primary/X_test_reg.parquet
+      - data/03_primary/y_train_reg.parquet
+      - data/03_primary/y_test_reg.parquet
+      - src/ml_mtg/pipelines/regression
+      - conf/base/parameters.yml
+    outs:
+      - data/06_models/best_reg_model.pkl
+      - data/08_reporting/reg_results.csv
+      - data/08_reporting/reg_comparison_plot.png
+      - data/08_reporting/reg_comparison_plotly.json
+      - data/08_reporting/reg_scatter_plotly.json
+      - data/08_reporting/reg_results.html
+      - data/08_reporting/reg_model_predictions.pkl
+    metrics:
+      - data/08_reporting/reg_metrics.json
